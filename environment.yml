@@ -1,0 +1,19 @@
+
+name: hyphy_env
+
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - python=3.10
+  - hyphy
+  - openmpi
+  - numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - biopython
+  - pyqt
+  - ete3
+  - legacy-cgi

@@ -1,0 +1,148 @@
+{
+    "tests": [
+        {
+            "name": "SimmondsAI",
+            "menu_path": [
+                "7",
+                "1"
+            ],
+            "inputs": [
+                {
+                    "description": "Load nucleotide sequence file",
+                    "value": "{alignment}"
+                },
+                {
+                    "description": "Number of sequence types",
+                    "value": "2"
+                },
+                {
+                    "description": "Select outgroup option",
+                    "value": "1"
+                },
+                {
+                    "description": "Regular expression defining clade 1",
+                    "value": "CVL"
+                },
+                {
+                    "description": "Confirm partitioning",
+                    "value": "y"
+                },
+                {
+                    "description": "Relabelings per sample",
+                    "value": "1000"
+                },
+                {
+                    "description": "Tree bootstrap samples",
+                    "value": "100"
+                },
+                {
+                    "description": "Significance threshold proportion",
+                    "value": "2/3"
+                }
+            ]
+        },
+        {
+            "name": "SlatkinMaddison",
+            "menu_path": [
+                "7",
+                "5"
+            ],
+            "inputs": [
+                {
+                    "description": "Tree file",
+                    "value": "{tree}"
+                },
+                {
+                    "description": "Number of branch classes",
+                    "value": "2"
+                },
+                {
+                    "description": "Description of branch group 1",
+                    "value": "CVL"
+                },
+                {
+                    "description": "Regex defining CVL branches",
+                    "value": "^CVL"
+                },
+                {
+                    "description": "Description of branch group 2",
+                    "value": "PLA"
+                },
+                {
+                    "description": "Regex defining PLA branches",
+                    "value": "^PLA"
+                },
+                {
+                    "description": "Bootstrap replicates",
+                    "value": "1000"
+                },
+                {
+                    "description": "Branch selection probability weight",
+                    "value": "0.2"
+                }
+            ]
+        },
+        {
+            "name": "TreeCorrelationCoefficients",
+            "menu_path": [
+                "7",
+                "3"
+            ],
+            "inputs": [
+                {
+                    "description": "Load Newick tree file",
+                    "value": "{tree}"
+                },
+                {
+                    "description": "Number of sequence types",
+                    "value": "2"
+                },
+                {
+                    "description": "Regular expression defining clade 1",
+                    "value": "^CVL"
+                },
+                {
+                    "description": "Confirm partitioning",
+                    "value": "y"
+                },
+                {
+                    "description": "Permutation test option",
+                    "value": "2"
+                },
+                {
+                    "description": "Number of permutations",
+                    "value": "1000"
+                }
+            ]
+        },
+        {
+            "name": "FST",
+            "menu_path": [
+                "7",
+                "4"
+            ],
+            "inputs": [
+                {
+                    "description": "Choose nucleotide data file",
+                    "value": "{alignment}"
+                },
+                {
+                    "description": "Regular expression for first clade",
+                    "value": "^CVL"
+                },
+                {
+                    "description": "Regular expression for second clade",
+                    "value": "^PLA"
+                },
+                {
+                    "description": "Bootstrap replicates",
+                    "value": "100"
+                },
+                {
+                    "description": "Permutation replicates",
+                    "value": "100"
+                }
+            ]
+        }
+    ]
+}

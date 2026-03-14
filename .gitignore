@@ -1,0 +1,12 @@
+data/
+tests_output/
+trees.svg/
+trees_output/
+*.log/
+*.svg
+*.newick
+*.nex
+.ipynb_checkpoints/
+
+
+
