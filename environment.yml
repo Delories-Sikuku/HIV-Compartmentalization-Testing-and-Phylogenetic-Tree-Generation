@@ -17,3 +17,4 @@ dependencies:
   - pyqt
   - ete3
   - legacy-cgi
+  - openpyxl

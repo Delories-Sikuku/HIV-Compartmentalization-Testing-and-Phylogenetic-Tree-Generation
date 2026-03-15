@@ -1,8 +1,10 @@
 import json
 import subprocess
+import re
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import os
+from openpyxl import Workbook
 
 DATA_DIR = Path("data")
 OUTPUT_DIR = Path("tests_output")
@@ -12,56 +14,107 @@ DATASET_FILE = "datasets.txt"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 config = json.load(open(CONFIG_FILE))
+samples = [x.strip() for x in open(DATASET_FILE) if x.strip()]
 
-datasets = [x.strip() for x in open(DATASET_FILE) if x.strip()]
+
+def extract_fields(stdout, field_patterns):
+
+    results = {}
+
+    for field_name, pattern in field_patterns.items():
+
+        matches = re.findall(pattern, stdout, re.MULTILINE)
+
+        if matches:
+            results[field_name] = matches[-1]
+        else:
+            results[field_name] = None
+
+    return results
 
 
-def run_test(dataset, test):
+def run_test(sample, test):
 
-    alignment = DATA_DIR / f"{dataset}-Alignment.nex"
-    tree = DATA_DIR / f"{dataset}-Alignment-tree.newick"
+    alignment = DATA_DIR / f"{sample}-Alignment.nex"
+    tree = DATA_DIR / f"{sample}-Alignment-tree.newick"
 
     answers = []
 
-    # navigate hyphy menu
     answers.extend(test["menu_path"])
 
-    # feed inputs
-    for inp in test["inputs"]:
-
+    for inp in test.get("inputs", []):
         value = inp["value"]
-
         value = value.replace("{alignment}", str(alignment))
         value = value.replace("{tree}", str(tree))
-
         answers.append(value)
 
-    answers.append("")  # return to menu
+    answers.append("")
 
-    log_file = OUTPUT_DIR / f"{dataset}_{test['name']}.log"
+    log_file = OUTPUT_DIR / f"{sample}_{test['name']}.log"
 
-    print(f"Running {test['name']} for {dataset}")
+    print(f"Running {test['name']} for {sample}")
+
+    proc = subprocess.run(
+        ["hyphy"],
+        input="\n".join(answers) + "\n",
+        text=True,
+        capture_output=True
+    )
+
+    stdout = proc.stdout
+    stderr = proc.stderr
 
     with open(log_file, "w") as log:
-        subprocess.run(
-            ["hyphy"],
-            input="\n".join(answers) + "\n",
-            text=True,
-            stdout=log,
-            stderr=log
-        )
+        log.write(stdout)
+        log.write(stderr)
 
-    return f"{dataset} {test['name']} completed"
+    fields = extract_fields(stdout, test.get("fields", {}))
+
+    results = []
+
+    for field_name, value in fields.items():
+        results.append({
+            "sample_name": sample,
+            "test_name": test["name"],
+            "field_name": field_name,
+            "field_value": value
+        })
+
+    return results
 
 
 def jobs():
-    for dataset in datasets:
+    for sample in samples:
         for test in config["tests"]:
-            yield dataset, test
+            yield sample, test
 
 
 def worker(args):
     return run_test(*args)
+
+
+def write_excel(all_results):
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "HyPhy Results"
+
+    ws.append([
+        "sample_name",
+        "test_name",
+        "field_name",
+        "field_value"
+    ])
+
+    for row in all_results:
+        ws.append([
+            row["sample_name"],
+            row["test_name"],
+            row["field_name"],
+            row["field_value"]
+        ])
+
+    wb.save(OUTPUT_DIR / "hyphy_results.xlsx")
 
 
 if __name__ == "__main__":
@@ -70,9 +123,21 @@ if __name__ == "__main__":
 
     print(f"Running with {workers} parallel workers")
 
+    all_results = []
+
     with ProcessPoolExecutor(max_workers=workers) as executor:
 
         futures = [executor.submit(worker, j) for j in jobs()]
 
         for f in as_completed(futures):
-            print(f.result())
+
+            result_rows = f.result()
+
+            for r in result_rows:
+                print(f"{r['sample_name']} {r['test_name']} {r['field_name']}")
+
+            all_results.extend(result_rows)
+
+    write_excel(all_results)
+
+    print("Excel report written to tests_output/hyphy_results.xlsx")
