@@ -3,25 +3,27 @@ import os
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from ete3 import Tree, TreeStyle, NodeStyle, TextFace
-
 DATA_DIR = Path("data")
 DATASET_FILE = "datasets.txt"
 OUTPUT_DIR = Path("trees_output")
 
-OUTPUT_DIR.mkdir(exist_ok=True)
-
-datasets = [x.strip() for x in open(DATASET_FILE) if x.strip()]
-
 pattern = re.compile(r"(CVL|PLA)-\d+")
 
 
-def build_tree(dataset):
+def load_datasets(dataset_file=DATASET_FILE):
+    with open(dataset_file, encoding="utf-8") as handle:
+        return [line.strip() for line in handle if line.strip()]
 
-    tree_file = DATA_DIR / f"{dataset}-Alignment-tree.newick"
+
+def build_tree(dataset, data_dir=DATA_DIR, output_dir=OUTPUT_DIR):
+    tree_file = data_dir / f"{dataset}-Alignment-tree.newick"
 
     if not tree_file.exists():
         return f"{dataset} tree not found"
+
+    from ete3 import NodeStyle, TextFace, Tree, TreeStyle
+
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     t = Tree(str(tree_file))
     t.ladderize()
@@ -68,8 +70,8 @@ def build_tree(dataset):
     ts.scale_length = 0.0005
     ts.branch_vertical_margin = 6
 
-    svg_output = OUTPUT_DIR / f"{dataset}.svg"
-    png_output = OUTPUT_DIR / f"{dataset}.png"
+    svg_output = output_dir / f"{dataset}.svg"
+    png_output = output_dir / f"{dataset}.png"
 
     t.render(str(svg_output), tree_style=ts, w=500)
     t.render(str(png_output), tree_style=ts, w=500)
@@ -82,6 +84,8 @@ def worker(dataset):
 
 
 if __name__ == "__main__":
+
+    datasets = load_datasets()
 
     workers = max(1, os.cpu_count() - 1)
 

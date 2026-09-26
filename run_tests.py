@@ -38,6 +38,12 @@ def run_test(sample, test):
     alignment = DATA_DIR / f"{sample}-Alignment.nex"
     tree = DATA_DIR / f"{sample}-Alignment-tree.newick"
 
+    required_files = {"alignment": alignment, "tree": tree}
+    missing_files = [name for name, path in required_files.items() if not path.exists()]
+    if missing_files:
+        missing = ", ".join(missing_files)
+        raise FileNotFoundError(f"{sample}: missing required {missing} input file(s) in {DATA_DIR}")
+
     answers = []
 
     answers.extend(test["menu_path"])
@@ -50,16 +56,20 @@ def run_test(sample, test):
 
     answers.append("")
 
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     log_file = OUTPUT_DIR / f"{sample}_{test['name']}.log"
 
     print(f"Running {test['name']} for {sample}")
 
-    proc = subprocess.run(
-        ["hyphy"],
-        input="\n".join(answers) + "\n",
-        text=True,
-        capture_output=True
-    )
+    try:
+        proc = subprocess.run(
+            ["hyphy"],
+            input="\n".join(answers) + "\n",
+            text=True,
+            capture_output=True
+        )
+    except FileNotFoundError as error:
+        raise RuntimeError("HyPhy was not found on PATH. Install it from environment.yml.") from error
 
     stdout = proc.stdout
     stderr = proc.stderr
@@ -67,6 +77,9 @@ def run_test(sample, test):
     with open(log_file, "w") as log:
         log.write(stdout)
         log.write(stderr)
+
+    if proc.returncode != 0:
+        raise RuntimeError(f"{sample} {test['name']} failed; see {log_file}")
 
     fields = extract_fields(stdout, test.get("fields", {}))
 
